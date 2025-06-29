@@ -3,10 +3,19 @@
  */
 export interface PackageInfo {
   name: string;
-  version: string;
+  version?: string;
   readme?: string;
   description?: string;
   homepage?: string;
+}
+
+/**
+ * NPMパッケージのリポジトリ情報
+ */
+export interface NpmRepository {
+  type?: string;
+  url: string;
+  directory?: string;
 }
 
 /**
@@ -14,7 +23,7 @@ export interface PackageInfo {
  */
 export interface NpmPackageInfo extends PackageInfo {
   npmUrl: string;
-  repository?: string;
+  repository?: string | NpmRepository;
   license?: string;
 }
 
@@ -39,13 +48,15 @@ export interface ApiError {
 /**
  * パッケージ取得結果
  */
-export type PackageResult<T = PackageInfo> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  error: ApiError;
-};
+export type PackageResult<T = PackageInfo> =
+  | {
+      success: true;
+      data: T;
+    }
+  | {
+      success: false;
+      error: ApiError;
+    };
 
 /**
  * バリデーションエラー
@@ -59,10 +70,12 @@ export interface ValidationError {
 /**
  * バリデーション結果
  */
-export type ValidationResult<T> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  errors: ValidationError[];
-};
+export type ValidationResult<T> =
+  | {
+      success: true;
+      data: T;
+    }
+  | {
+      success: false;
+      errors: ValidationError[];
+    };

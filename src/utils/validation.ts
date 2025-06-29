@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ValidationResult, ValidationError } from "../types/index.js";
+import type { ValidationError, ValidationResult } from "../types/index.js";
 
 /**
  * パッケージ名のZodスキーマ
@@ -13,7 +13,7 @@ const packageNameSchema = z
   .max(256, "Package name must be 256 characters or less")
   .regex(
     /^[@a-zA-Z0-9._/-]+$/,
-    "Package name can only contain letters, numbers, hyphens, underscores, periods, slashes, and @ symbols"
+    "Package name can only contain letters, numbers, hyphens, underscores, periods, slashes, and @ symbols",
   );
 
 /**
@@ -28,7 +28,7 @@ const versionSchema = z
   .min(1, "Version cannot be empty")
   .regex(
     /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/,
-    "Version must be in semantic versioning format (e.g., 1.0.0, 1.0.0-alpha.1)"
+    "Version must be in semantic versioning format (e.g., 1.0.0, 1.0.0-alpha.1)",
   );
 
 /**
@@ -36,7 +36,6 @@ const versionSchema = z
  */
 export const npmPackageParamsSchema = z.object({
   name: packageNameSchema,
-  version: versionSchema,
 });
 
 /**
@@ -44,7 +43,6 @@ export const npmPackageParamsSchema = z.object({
  */
 export const gemPackageParamsSchema = z.object({
   name: packageNameSchema,
-  version: versionSchema,
 });
 
 /**
@@ -64,16 +62,14 @@ function zodErrorToValidationErrors(error: z.ZodError): ValidationError[] {
   return error.errors.map((err) => ({
     field: err.path.join("."),
     message: err.message,
-    received: err.code === "invalid_type" ? (err as any).received : undefined,
+    received: err.code === "invalid_type" ? err.received : undefined,
   }));
 }
 
 /**
  * NPMパッケージのパラメータを検証
  */
-export function validateNpmPackageParams(
-  params: unknown
-): ValidationResult<NpmPackageParams> {
+export function validateNpmPackageParams(params: unknown): ValidationResult<NpmPackageParams> {
   try {
     const validatedData = npmPackageParamsSchema.parse(params);
     return {
@@ -102,9 +98,7 @@ export function validateNpmPackageParams(
 /**
  * Gemパッケージのパラメータを検証
  */
-export function validateGemPackageParams(
-  params: unknown
-): ValidationResult<GemPackageParams> {
+export function validateGemPackageParams(params: unknown): ValidationResult<GemPackageParams> {
   try {
     const validatedData = gemPackageParamsSchema.parse(params);
     return {

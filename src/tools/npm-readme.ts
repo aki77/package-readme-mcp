@@ -1,19 +1,18 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { NpmPackageInfo, PackageResult } from "../types/index.js";
-import type { NpmPackageParams } from "../utils/validation.js";
 import {
-  createPackageNotFoundError,
-  createVersionNotFoundError,
-  createReadmeNotFoundError,
   createInternalError,
+  createPackageNotFoundError,
+  createReadmeNotFoundError,
 } from "../utils/errors.js";
 import { readReadmeFromPath } from "../utils/readme.js";
+import type { NpmPackageParams } from "../utils/validation.js";
 
 /**
  * package.jsonから情報を読み取る
  */
-async function readPackageJson(packagePath: string): Promise<any> {
+async function readPackageJson(packagePath: string): Promise<NpmPackageInfo | null> {
   try {
     const packageJsonPath = path.join(packagePath, "package.json");
     const packageJsonContent = await fs.readFile(packageJsonPath, "utf-8");
@@ -26,7 +25,10 @@ async function readPackageJson(packagePath: string): Promise<any> {
 /**
  * node_modulesからパッケージパスを解決する
  */
-export function resolvePackagePath(packageName: string, workingDir: string = process.cwd()): string {
+export function resolvePackagePath(
+  packageName: string,
+  workingDir: string = process.cwd(),
+): string {
   // スコープ付きパッケージの場合（@scope/package）
   if (packageName.startsWith("@")) {
     return path.join(workingDir, "node_modules", packageName);
@@ -37,13 +39,13 @@ export function resolvePackagePath(packageName: string, workingDir: string = pro
 }
 
 /**
- * node_modules から指定バージョンのパッケージ情報を取得
+ * node_modules から指定パッケージの情報を取得
  */
 export async function getNpmPackageReadme(
   params: NpmPackageParams,
-  packagePathResolver: (packageName: string, workingDir?: string) => string = resolvePackagePath
+  packagePathResolver: (packageName: string, workingDir?: string) => string = resolvePackagePath,
 ): Promise<PackageResult<NpmPackageInfo>> {
-  const { name, version } = params;
+  const { name } = params;
 
   try {
     // パッケージのディレクトリパスを解決
@@ -68,34 +70,27 @@ export async function getNpmPackageReadme(
       };
     }
 
-    // バージョンの確認
-    if (packageData.version !== version) {
-      return {
-        success: false,
-        error: createVersionNotFoundError(name, version, "npm"),
-      };
-    }
-
     // README ファイルを検索
     const readme = await readReadmeFromPath(packagePath);
     if (!readme) {
       return {
         success: false,
-        error: createReadmeNotFoundError(name, version, "npm"),
+        error: createReadmeNotFoundError(name, packageData.version, "npm"),
       };
     }
 
     // パッケージ情報を構築
     const npmPackageInfo: NpmPackageInfo = {
       name: packageData.name || name,
-      version: packageData.version || version,
+      version: packageData.version,
       readme: readme,
       description: packageData.description,
       homepage: packageData.homepage,
-      npmUrl: `https://www.npmjs.com/package/${encodeURIComponent(name)}/v/${encodeURIComponent(version)}`,
-      repository: typeof packageData.repository === "object"
-        ? packageData.repository?.url
-        : packageData.repository,
+      npmUrl: `https://www.npmjs.com/package/${encodeURIComponent(name)}`,
+      repository:
+        typeof packageData.repository === "object"
+          ? packageData.repository?.url
+          : packageData.repository,
       license: packageData.license,
     };
 
@@ -103,11 +98,13 @@ export async function getNpmPackageReadme(
       success: true,
       data: npmPackageInfo,
     };
-
   } catch (error) {
     return {
       success: false,
-      error: createInternalError("Unexpected error occurred", error instanceof Error ? error : undefined),
+      error: createInternalError(
+        "Unexpected error occurred",
+        error instanceof Error ? error : undefined,
+      ),
     };
   }
 }

@@ -1,23 +1,23 @@
-import { exec } from "child_process";
-import { promisify } from "util";
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { exec } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { promisify } from "node:util";
 import type { GemPackageInfo, PackageResult } from "../types/index.js";
-import type { GemPackageParams } from "../utils/validation.js";
 import {
+  createInternalError,
   createPackageNotFoundError,
   createReadmeNotFoundError,
-  createInternalError,
 } from "../utils/errors.js";
 import { readReadmeFromPath } from "../utils/readme.js";
+import type { GemPackageParams } from "../utils/validation.js";
 
 /**
- * ローカルにインストールされているgemからREADMEを取得
+ * Get README from a locally installed gem
  */
 export async function getGemPackageReadme(
-  params: GemPackageParams
+  params: GemPackageParams,
 ): Promise<PackageResult<GemPackageInfo>> {
-  const { name, version } = params;
+  const { name } = params;
 
   try {
     const gemPath = await getGemPath(name);
@@ -31,18 +31,20 @@ export async function getGemPackageReadme(
 
     const readme = await readReadmeFromPath(gemPath);
     if (!readme) {
-      return await createGemPackageInfoFromGemspec(name, version, gemPath);
+      return await createGemPackageInfoFromGemspec(name, undefined, gemPath);
     }
 
     return {
       success: true,
-      data: createGemPackageInfo(name, version, readme),
+      data: createGemPackageInfo(name, undefined, readme),
     };
-
   } catch (error) {
     return {
       success: false,
-      error: createInternalError("Unexpected error occurred", error instanceof Error ? error : undefined),
+      error: createInternalError(
+        "Unexpected error occurred",
+        error instanceof Error ? error : undefined,
+      ),
     };
   }
 }
@@ -54,14 +56,14 @@ const execAsync = promisify(exec);
  */
 async function createGemPackageInfoFromGemspec(
   name: string,
-  version: string,
-  gemPath: string
+  version: string | undefined,
+  gemPath: string,
 ): Promise<PackageResult<GemPackageInfo>> {
   const gemspecDescription = await getDescriptionFromGemspec(gemPath);
   if (!gemspecDescription) {
     return {
       success: false,
-      error: createReadmeNotFoundError(name, version, "gem"),
+      error: createReadmeNotFoundError(name, version || "latest", "gem"),
     };
   }
 
@@ -76,12 +78,16 @@ async function createGemPackageInfoFromGemspec(
 /**
  * GemPackageInfoオブジェクトを作成する
  */
-function createGemPackageInfo(name: string, version: string, readme: string): GemPackageInfo {
+function createGemPackageInfo(
+  name: string,
+  version: string | undefined,
+  readme: string,
+): GemPackageInfo {
   return {
     name: name,
     version: version,
     readme: readme,
-    gemUrl: `https://rubygems.org/gems/${encodeURIComponent(name)}/versions/${encodeURIComponent(version)}`,
+    gemUrl: `https://rubygems.org/gems/${encodeURIComponent(name)}${version ? `/versions/${encodeURIComponent(version)}` : ""}`,
   };
 }
 
@@ -103,9 +109,9 @@ async function getGemPath(gemName: string): Promise<string | undefined> {
 async function getDescriptionFromGemspec(gemPath: string): Promise<string | undefined> {
   try {
     // ディレクトリ内の最初の.gemspecファイルを探す
-    const { readdir } = await import("fs/promises");
+    const { readdir } = await import("node:fs/promises");
     const files = await readdir(gemPath);
-    const gemspecFile = files.find(file => file.endsWith(".gemspec"));
+    const gemspecFile = files.find((file) => file.endsWith(".gemspec"));
 
     if (!gemspecFile) {
       return undefined;
@@ -116,13 +122,13 @@ async function getDescriptionFromGemspec(gemPath: string): Promise<string | unde
 
     // gemspecファイルからdescriptionを抽出
     const descriptionMatch = content.match(/\.description\s*=\s*["'`]([^"'`]+)["'`]/);
-    if (descriptionMatch && descriptionMatch[1]) {
+    if (descriptionMatch?.[1]) {
       return descriptionMatch[1].trim();
     }
 
     // summary も試行
     const summaryMatch = content.match(/\.summary\s*=\s*["'`]([^"'`]+)["'`]/);
-    if (summaryMatch && summaryMatch[1]) {
+    if (summaryMatch?.[1]) {
       return summaryMatch[1].trim();
     }
 

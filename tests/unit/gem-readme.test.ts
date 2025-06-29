@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { exec } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getGemPackageReadme } from "../../src/tools/gem-readme.js";
 import type { GemPackageParams } from "../../src/utils/validation.js";
-import { exec } from "child_process";
-import path from "path";
-import { fileURLToPath } from "url";
 
 // child_processとutilのモック
 vi.mock("child_process", () => ({
@@ -14,6 +14,7 @@ vi.mock("util", () => ({
   promisify: vi.fn((fn) => {
     return vi.fn((...args) => {
       return new Promise((resolve, reject) => {
+        // biome-ignore lint/suspicious/noExplicitAny: test
         fn(...args, (error: any, stdout: string, stderr: string) => {
           if (error) {
             reject(error);
@@ -46,20 +47,20 @@ describe("gem-readme", () => {
     it("should return gem info with README for locally installed gem", async () => {
       const params: GemPackageParams = {
         name: "rails",
-        version: "7.0.0",
       };
 
       const gemPath = path.join(FIXTURES_PATH, "rails-7.0.0");
 
       // Mock exec to return gem path
-      mockExec.mockImplementation((command, options, callback) => {
-        if (typeof options === 'function') {
-          callback = options;
+      mockExec.mockImplementation((_command, options, callback) => {
+        let cb = callback;
+        if (typeof options === "function") {
+          cb = options;
         }
-        if (callback) {
-          callback(null, `${gemPath}\n`, "");
+        if (cb) {
+          cb(null, `${gemPath}\n`, "");
         }
-        return {} as any;
+        return {} as ReturnType<typeof exec>;
       });
 
       const result = await getGemPackageReadme(params);
@@ -67,9 +68,9 @@ describe("gem-readme", () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.name).toBe("rails");
-        expect(result.data.version).toBe("7.0.0");
+        expect(result.data.version).toBeUndefined();
         expect(result.data.readme).toBe("# Rails\n\nRuby on Rails framework\n");
-        expect(result.data.gemUrl).toBe("https://rubygems.org/gems/rails/versions/7.0.0");
+        expect(result.data.gemUrl).toBe("https://rubygems.org/gems/rails");
       }
 
       expect(mockExec).toHaveBeenCalledWith("bundle show rails", expect.any(Function));
@@ -78,20 +79,22 @@ describe("gem-readme", () => {
     it("should handle gem not installed error", async () => {
       const params: GemPackageParams = {
         name: "non-existent-gem",
-        version: "1.0.0",
       };
 
       // Mock exec to return error
-      mockExec.mockImplementation((command, options, callback) => {
-        if (typeof options === 'function') {
-          callback = options;
+      mockExec.mockImplementation((_command, options, callback) => {
+        let cb = callback;
+        if (typeof options === "function") {
+          cb = options;
         }
-        if (callback) {
-          const error = new Error("Could not find gem 'non-existent-gem'") as any;
+        if (cb) {
+          const error = new Error("Could not find gem 'non-existent-gem'") as Error & {
+            code: number;
+          };
           error.code = 1;
-          callback(error, "", "Could not find gem 'non-existent-gem'\n");
+          cb(error, "", "Could not find gem 'non-existent-gem'\n");
         }
-        return {} as any;
+        return {} as ReturnType<typeof exec>;
       });
 
       const result = await getGemPackageReadme(params);
@@ -106,20 +109,20 @@ describe("gem-readme", () => {
     it("should handle README.md not found and fallback to gemspec", async () => {
       const params: GemPackageParams = {
         name: "test-gem",
-        version: "1.0.0",
       };
 
       const gemPath = path.join(FIXTURES_PATH, "test-gem-1.0.0");
 
       // Mock exec to return gem path
-      mockExec.mockImplementation((command, options, callback) => {
-        if (typeof options === 'function') {
-          callback = options;
+      mockExec.mockImplementation((_command, options, callback) => {
+        let cb = callback;
+        if (typeof options === "function") {
+          cb = options;
         }
-        if (callback) {
-          callback(null, `${gemPath}\n`, "");
+        if (cb) {
+          cb(null, `${gemPath}\n`, "");
         }
-        return {} as any;
+        return {} as ReturnType<typeof exec>;
       });
 
       const result = await getGemPackageReadme(params);
@@ -133,20 +136,20 @@ describe("gem-readme", () => {
     it("should return error when no README.md found and no gemspec", async () => {
       const params: GemPackageParams = {
         name: "no-readme-gem",
-        version: "1.0.0",
       };
 
       const gemPath = path.join(FIXTURES_PATH, "no-readme-gem-1.0.0");
 
       // Mock exec to return gem path
-      mockExec.mockImplementation((command, options, callback) => {
-        if (typeof options === 'function') {
-          callback = options;
+      mockExec.mockImplementation((_command, options, callback) => {
+        let cb = callback;
+        if (typeof options === "function") {
+          cb = options;
         }
-        if (callback) {
-          callback(null, `${gemPath}\n`, "");
+        if (cb) {
+          cb(null, `${gemPath}\n`, "");
         }
-        return {} as any;
+        return {} as ReturnType<typeof exec>;
       });
 
       const result = await getGemPackageReadme(params);
@@ -161,19 +164,19 @@ describe("gem-readme", () => {
     it("should handle bundle command error", async () => {
       const params: GemPackageParams = {
         name: "test-gem",
-        version: "1.0.0",
       };
 
       // Mock exec to simulate command error
-      mockExec.mockImplementation((command, options, callback) => {
-        if (typeof options === 'function') {
-          callback = options;
+      mockExec.mockImplementation((_command, options, callback) => {
+        let cb = callback;
+        if (typeof options === "function") {
+          cb = options;
         }
-        if (callback) {
+        if (cb) {
           const error = new Error("bundle command not found");
-          callback(error, "", "");
+          cb(error, "", "");
         }
-        return {} as any;
+        return {} as ReturnType<typeof exec>;
       });
 
       const result = await getGemPackageReadme(params);
@@ -187,27 +190,29 @@ describe("gem-readme", () => {
     it("should fallback to gemspec description when README not found", async () => {
       const params: GemPackageParams = {
         name: "minimal-gem",
-        version: "1.0.0",
       };
 
       const gemPath = path.join(FIXTURES_PATH, "minimal-gem-1.0.0");
 
       // Mock exec to return gem path
-      mockExec.mockImplementation((command, options, callback) => {
-        if (typeof options === 'function') {
-          callback = options;
+      mockExec.mockImplementation((_command, options, callback) => {
+        let cb = callback;
+        if (typeof options === "function") {
+          cb = options;
         }
-        if (callback) {
-          callback(null, `${gemPath}\n`, "");
+        if (cb) {
+          cb(null, `${gemPath}\n`, "");
         }
-        return {} as any;
+        return {} as ReturnType<typeof exec>;
       });
 
       const result = await getGemPackageReadme(params);
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.readme).toBe("# minimal-gem\n\nThis is a minimal gem for testing purposes");
+        expect(result.data.readme).toBe(
+          "# minimal-gem\n\nThis is a minimal gem for testing purposes",
+        );
       }
     });
   });

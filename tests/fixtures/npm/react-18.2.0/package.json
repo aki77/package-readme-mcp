@@ -3,6 +3,8 @@
   "version": "18.2.0",
   "description": "React is a JavaScript library for building user interfaces.",
   "homepage": "https://reactjs.org/",
-  "repository": { "url": "https://github.com/facebook/react.git" },
+  "repository": {
+    "url": "https://github.com/facebook/react.git"
+  },
   "license": "MIT"
 }

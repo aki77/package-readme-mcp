@@ -1,11 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  validateNpmPackageParams,
-  validateGemPackageParams,
   isValidPackageName,
   isValidVersion,
-  type NpmPackageParams,
-  type GemPackageParams,
+  validateGemPackageParams,
+  validateNpmPackageParams,
 } from "../../src/utils/validation.js";
 
 describe("validation", () => {
@@ -63,50 +61,43 @@ describe("validation", () => {
     it("should validate correct npm package parameters", () => {
       const validParams = {
         name: "react",
-        version: "18.2.0",
       };
 
       const result = validateNpmPackageParams(validParams);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.name).toBe("react");
-        expect(result.data.version).toBe("18.2.0");
       }
     });
 
     it("should reject invalid npm package parameters", () => {
       const invalidParams = {
         name: "",
-        version: "invalid-version",
       };
 
       const result = validateNpmPackageParams(invalidParams);
       expect(result.success).toBe(false);
       if (!result.success) {
-        // エラーの数が変動する可能性があるため、少なくとも2つはあることを確認
-        expect(result.errors.length).toBeGreaterThanOrEqual(2);
-        expect(result.errors.some(err => err.field === "name")).toBe(true);
-        expect(result.errors.some(err => err.field === "version")).toBe(true);
+        expect(result.errors.length).toBeGreaterThanOrEqual(1);
+        expect(result.errors.some((err) => err.field === "name")).toBe(true);
       }
     });
 
     it("should reject missing parameters", () => {
       const incompleteParams = {
-        name: "react",
-        // version is missing
+        // name is missing
       };
 
       const result = validateNpmPackageParams(incompleteParams);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors.some(err => err.field === "version")).toBe(true);
+        expect(result.errors.some((err) => err.field === "name")).toBe(true);
       }
     });
 
     it("should reject extra parameters", () => {
       const paramsWithExtra = {
         name: "react",
-        version: "18.2.0",
         extra: "should not be here",
       };
 
@@ -120,36 +111,31 @@ describe("validation", () => {
     it("should validate correct gem package parameters", () => {
       const validParams = {
         name: "rails",
-        version: "7.0.0",
       };
 
       const result = validateGemPackageParams(validParams);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.name).toBe("rails");
-        expect(result.data.version).toBe("7.0.0");
       }
     });
 
     it("should reject invalid gem package parameters", () => {
       const invalidParams = {
         name: "gem with spaces",
-        version: "not-a-version",
       };
 
       const result = validateGemPackageParams(invalidParams);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors).toHaveLength(2);
+        expect(result.errors).toHaveLength(1);
         expect(result.errors[0].field).toBe("name");
-        expect(result.errors[1].field).toBe("version");
       }
     });
 
     it("should handle complex gem names", () => {
       const validParams = {
         name: "activesupport",
-        version: "7.0.0-alpha.1",
       };
 
       const result = validateGemPackageParams(validParams);
