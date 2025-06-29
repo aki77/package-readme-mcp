@@ -1,64 +1,67 @@
-Package README MCP Server 仕様書
-サーバ基本情報
+# package-readme-mcp
 
-サーバ名: package-readme-mcp
-説明: npmパッケージやRuby gemの最新版READMEファイルを取得するMCPサーバ
-プロトコル: MCP (Model Context Protocol)
+An MCP (Model Context Protocol) server for retrieving package README files. Supports both NPM packages and Ruby Gems.
 
-提供ツール
-1. get_npm_readme
+## Overview
 
-目的: npmパッケージの最新版READMEを取得
-パラメータ:
+This MCP server allows you to fetch README files from npm or gem packages installed in your project, making it easy to access documentation such as usage instructions, API references, and code examples.
 
-package_name (string, required): パッケージ名
+## Features
 
+- **NPM Packages**: Retrieve the README of installed NPM packages in your project
+- **Ruby Gems**: Retrieve the README of installed Ruby gems in your project
 
-レスポンス:
+## Usage
 
-成功時: README内容（Markdown形式）
-エラー時: エラーメッセージ（パッケージ不存在、ネットワークエラーなど）
+### As an MCP Client
 
+This server can be used from any client that supports the MCP protocol (such as Claude Code, VS Code, etc.).
 
+#### VSCode Configuration
 
-2. get_gem_readme
+Add the following to your `.vscode/mcp.json`:
 
-目的: Ruby gemの最新版READMEを取得
-パラメータ:
-
-gem_name (string, required): gem名
-
-
-レスポンス:
-
-成功時: README内容（Markdown形式）
-エラー時: エラーメッセージ（gem不存在、ネットワークエラーなど）
-
-
-エラーハンドリング
-エラーケース
-
-パッケージが存在しない
-READMEファイルが存在しない
-ネットワーク接続エラー
-レート制限に達した場合
-不正なパラメータ
-
-エラーレスポンス形式
-json{
-  "error": "error_code",
-  "message": "人間が読める形式のエラーメッセージ",
-  "details": {
-    "package_name": "対象パッケージ名"
+```json
+{
+  "servers": {
+    "package-readme": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@aki77/package-readme-mcp"]
+    }
   }
 }
+```
 
-データソース
+## Available Tools
 
-ローカル
+### get_npm_readme
 
-セキュリティ考慮事項
-入力検証
+Retrieves the README for an NPM package.
 
-パッケージ名の形式チェック（英数字、ハイフン、アンダースコア、スラッシュのみ許可）
-最大文字数制限（パッケージ名: 256文字）
+**Parameters:**
+- `name` (required): NPM package name (supports scoped packages like `@scope/package`)
+
+**Examples:**
+```
+get_npm_readme
+name: react
+```
+
+```
+get_npm_readme
+name: @types/react
+```
+
+### get_gem_readme
+
+Retrieves the README for a Ruby Gem.
+
+**Parameters:**
+- `name` (required): Gem package name
+
+**Example:**
+```
+get_gem_readme
+name: rails
+```
