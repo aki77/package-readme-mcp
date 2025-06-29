@@ -1,4 +1,4 @@
-import type { ApiError } from "../types/index.js";
+import type { PackageError } from "../types/index.js";
 
 /**
  * Error code constants
@@ -21,7 +21,7 @@ export function createError(
   code: ErrorCode,
   message: string,
   details?: Record<string, unknown>,
-): ApiError {
+): PackageError {
   return {
     code,
     message,
@@ -35,7 +35,7 @@ export function createError(
 export function createPackageNotFoundError(
   packageName: string,
   packageType: "npm" | "gem",
-): ApiError {
+): PackageError {
   return createError(
     ERROR_CODES.PACKAGE_NOT_FOUND,
     `${packageType} package '${packageName}' not found`,
@@ -50,7 +50,7 @@ export function createReadmeNotFoundError(
   packageName: string,
   version: string | undefined,
   packageType: "npm" | "gem",
-): ApiError {
+): PackageError {
   return createError(
     ERROR_CODES.README_NOT_FOUND,
     `README not found for ${packageType} package '${packageName}' version '${version}'`,
@@ -61,7 +61,7 @@ export function createReadmeNotFoundError(
 /**
  * Create an internal error
  */
-export function createInternalError(message: string, originalError?: Error): ApiError {
+export function createInternalError(message: string, originalError?: Error): PackageError {
   return createError(ERROR_CODES.INTERNAL_ERROR, `Internal error: ${message}`, {
     originalError: originalError?.message,
   });

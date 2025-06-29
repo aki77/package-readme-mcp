@@ -37,9 +37,9 @@ export interface GemPackageInfo extends PackageInfo {
 }
 
 /**
- * API error information
+ * Package error information
  */
-export interface ApiError {
+export interface PackageError {
   code: string;
   message: string;
   details?: Record<string, unknown>;
@@ -55,7 +55,7 @@ export type PackageResult<T = PackageInfo> =
     }
   | {
       success: false;
-      error: ApiError;
+      error: PackageError;
     };
 
 /**

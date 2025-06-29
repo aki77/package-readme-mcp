@@ -71,9 +71,11 @@ server.registerTool(
 
       return output.success(result.data.readme || "No README found");
     } catch (error) {
-      return output.error(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+      return output.error(
+        `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
-  }
+  },
 );
 
 // Register gem readme tool
@@ -102,9 +104,11 @@ server.registerTool(
 
       return output.success(result.data.readme || "No README found");
     } catch (error) {
-      return output.error(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+      return output.error(
+        `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
-  }
+  },
 );
 
 async function main() {
