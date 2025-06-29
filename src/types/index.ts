@@ -1,5 +1,5 @@
 /**
- * パッケージ情報の型定義
+ * Package information type definition
  */
 export interface PackageInfo {
   name: string;
@@ -10,7 +10,7 @@ export interface PackageInfo {
 }
 
 /**
- * NPMパッケージのリポジトリ情報
+ * NPM package repository information
  */
 export interface NpmRepository {
   type?: string;
@@ -19,7 +19,7 @@ export interface NpmRepository {
 }
 
 /**
- * NPMパッケージの詳細情報
+ * NPM package detailed information
  */
 export interface NpmPackageInfo extends PackageInfo {
   npmUrl: string;
@@ -28,7 +28,7 @@ export interface NpmPackageInfo extends PackageInfo {
 }
 
 /**
- * Gemパッケージの詳細情報
+ * Gem package detailed information
  */
 export interface GemPackageInfo extends PackageInfo {
   gemUrl: string;
@@ -37,7 +37,7 @@ export interface GemPackageInfo extends PackageInfo {
 }
 
 /**
- * API エラー情報
+ * API error information
  */
 export interface ApiError {
   code: string;
@@ -46,7 +46,7 @@ export interface ApiError {
 }
 
 /**
- * パッケージ取得結果
+ * Package retrieval result
  */
 export type PackageResult<T = PackageInfo> =
   | {
@@ -59,7 +59,7 @@ export type PackageResult<T = PackageInfo> =
     };
 
 /**
- * バリデーションエラー
+ * Validation error
  */
 export interface ValidationError {
   field: string;
@@ -68,7 +68,7 @@ export interface ValidationError {
 }
 
 /**
- * バリデーション結果
+ * Validation result
  */
 export type ValidationResult<T> =
   | {

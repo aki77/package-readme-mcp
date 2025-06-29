@@ -1,138 +1,111 @@
 #!/usr/bin/env node
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ErrorCode,
-  ListToolsRequestSchema,
-  McpError,
-} from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 import { getGemPackageReadme } from "./tools/gem-readme.js";
 import { getNpmPackageReadme } from "./tools/npm-readme.js";
-import type { ValidationError } from "./types/index.js";
-import { validateGemPackageParams, validateNpmPackageParams } from "./utils/validation.js";
+import { gemPackageParamsSchema, npmPackageParamsSchema } from "./utils/validation.js";
 
-const server = new Server(
+const server = new McpServer({
+  name: "package-readme-mcp",
+  version: "1.0.0",
+});
+
+// Define output schemas for both tools
+const packageReadmeOutputSchema = {
+  isError: z.boolean(),
+  readme: z.string().optional(),
+  error: z.string().optional(),
+};
+
+// Helper function to create structured output
+const createStructuredOutput = () => {
+  return {
+    success: (readme: string) => ({
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({ isError: false, readme }),
+        },
+      ],
+      isError: false,
+      structuredContent: { isError: false, readme },
+    }),
+    error: (error: string) => ({
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({ isError: true, error }),
+        },
+      ],
+      isError: true,
+      structuredContent: { isError: true, error },
+    }),
+  };
+};
+
+// Register npm readme tool
+server.registerTool(
+  "get_npm_readme",
   {
-    name: "package-readme-mcp",
-    version: "1.0.0",
-  },
-  {
-    capabilities: {
-      tools: {},
+    title: "Get NPM Package README",
+    description:
+      "Get README documentation for npm packages to understand usage, installation instructions, API reference, and examples. Useful for learning how to use npm packages in your project.",
+    annotations: {
+      openWorldHint: false,
+      readOnlyHint: true,
     },
+    inputSchema: npmPackageParamsSchema.shape,
+    outputSchema: packageReadmeOutputSchema,
   },
+  async ({ name }) => {
+    const output = createStructuredOutput();
+
+    try {
+      const result = await getNpmPackageReadme({ name });
+
+      if (!result.success) {
+        return output.error(`${result.error.message}`);
+      }
+
+      return output.success(result.data.readme || "No README found");
+    } catch (error) {
+      return output.error(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 );
 
-// List tools handler
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: "get_npm_readme",
-        description:
-          "Get README documentation for npm packages to understand usage, installation instructions, API reference, and examples. Useful for learning how to use npm packages in your project.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            name: {
-              type: "string",
-              description: "The npm package name (supports scoped packages like @scope/package)",
-            },
-          },
-          required: ["name"],
-        },
-      },
-      {
-        name: "get_gem_readme",
-        description:
-          "Get README documentation for Ruby gems to understand usage, installation instructions, API reference, and code examples. Useful for learning how to use Ruby gems in your project.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            name: {
-              type: "string",
-              description: "The gem package name",
-            },
-          },
-          required: ["name"],
-        },
-      },
-    ],
-  };
-});
+// Register gem readme tool
+server.registerTool(
+  "get_gem_readme",
+  {
+    title: "Get Gem Package README",
+    description:
+      "Get README documentation for Ruby gems to understand usage, installation instructions, API reference, and code examples. Useful for learning how to use Ruby gems in your project.",
+    annotations: {
+      openWorldHint: false,
+      readOnlyHint: true,
+    },
+    inputSchema: gemPackageParamsSchema.shape,
+    outputSchema: packageReadmeOutputSchema,
+  },
+  async ({ name }) => {
+    const output = createStructuredOutput();
 
-// Call tool handler
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  switch (name) {
-    case "get_npm_readme": {
-      // Validate input parameters
-      const validation = validateNpmPackageParams(args);
-      if (!validation.success) {
-        throw new McpError(
-          ErrorCode.InvalidParams,
-          `Invalid parameters: ${validation.errors.map((e: ValidationError) => e.message).join(", ")}`,
-        );
-      }
-
-      // Get npm package README
-      const result = await getNpmPackageReadme(validation.data);
-      if (!result.success) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          `${result.error.message}`,
-          result.error.details,
-        );
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: result.data.readme,
-          },
-        ],
-      };
-    }
-
-    case "get_gem_readme": {
-      // Validate input parameters
-      const validation = validateGemPackageParams(args);
-      if (!validation.success) {
-        throw new McpError(
-          ErrorCode.InvalidParams,
-          `Invalid parameters: ${validation.errors.map((e: ValidationError) => e.message).join(", ")}`,
-        );
-      }
-
-      // Get gem package README
-      const result = await getGemPackageReadme(validation.data);
+    try {
+      const result = await getGemPackageReadme({ name });
 
       if (!result.success) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          `${result.error.message}`,
-          result.error.details,
-        );
+        return output.error(`${result.error.message}`);
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: result.data.readme,
-          },
-        ],
-      };
+      return output.success(result.data.readme || "No README found");
+    } catch (error) {
+      return output.error(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    default:
-      throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
   }
-});
+);
 
 async function main() {
   const transport = new StdioServerTransport();

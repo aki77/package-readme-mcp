@@ -10,7 +10,7 @@ import { readReadmeFromPath } from "../utils/readme.js";
 import type { NpmPackageParams } from "../utils/validation.js";
 
 /**
- * package.jsonから情報を読み取る
+ * Read information from package.json
  */
 async function readPackageJson(packagePath: string): Promise<NpmPackageInfo | null> {
   try {
@@ -23,23 +23,23 @@ async function readPackageJson(packagePath: string): Promise<NpmPackageInfo | nu
 }
 
 /**
- * node_modulesからパッケージパスを解決する
+ * Resolve package path from node_modules
  */
 export function resolvePackagePath(
   packageName: string,
   workingDir: string = process.cwd(),
 ): string {
-  // スコープ付きパッケージの場合（@scope/package）
+  // For scoped packages (@scope/package)
   if (packageName.startsWith("@")) {
     return path.join(workingDir, "node_modules", packageName);
   }
 
-  // 通常のパッケージの場合
+  // For regular packages
   return path.join(workingDir, "node_modules", packageName);
 }
 
 /**
- * node_modules から指定パッケージの情報を取得
+ * Get package information from node_modules for the specified package
  */
 export async function getNpmPackageReadme(
   params: NpmPackageParams,
@@ -48,10 +48,10 @@ export async function getNpmPackageReadme(
   const { name } = params;
 
   try {
-    // パッケージのディレクトリパスを解決
+    // Resolve package directory path
     const packagePath = packagePathResolver(name);
 
-    // パッケージディレクトリの存在確認
+    // Check if package directory exists
     try {
       await fs.access(packagePath);
     } catch {
@@ -61,7 +61,7 @@ export async function getNpmPackageReadme(
       };
     }
 
-    // package.json から情報を読み取り
+    // Read information from package.json
     const packageData = await readPackageJson(packagePath);
     if (!packageData) {
       return {
@@ -70,7 +70,7 @@ export async function getNpmPackageReadme(
       };
     }
 
-    // README ファイルを検索
+    // Search for README file
     const readme = await readReadmeFromPath(packagePath);
     if (!readme) {
       return {
@@ -79,7 +79,7 @@ export async function getNpmPackageReadme(
       };
     }
 
-    // パッケージ情報を構築
+    // Build package information
     const npmPackageInfo: NpmPackageInfo = {
       name: packageData.name || name,
       version: packageData.version,

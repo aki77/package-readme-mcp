@@ -1,21 +1,21 @@
 import type { ApiError } from "../types/index.js";
 
 /**
- * エラーコード定数
+ * Error code constants
  */
 export const ERROR_CODES = {
-  // パッケージ関連エラー
+  // Package related errors
   PACKAGE_NOT_FOUND: "PACKAGE_NOT_FOUND",
   README_NOT_FOUND: "README_NOT_FOUND",
 
-  // サーバー関連エラー
+  // Server related errors
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 /**
- * エラーオブジェクトを作成する
+ * Create an error object
  */
 export function createError(
   code: ErrorCode,
@@ -30,7 +30,7 @@ export function createError(
 }
 
 /**
- * パッケージが見つからないエラーを作成
+ * Create a package not found error
  */
 export function createPackageNotFoundError(
   packageName: string,
@@ -44,7 +44,7 @@ export function createPackageNotFoundError(
 }
 
 /**
- * READMEが見つからないエラーを作成
+ * Create a README not found error
  */
 export function createReadmeNotFoundError(
   packageName: string,
@@ -59,7 +59,7 @@ export function createReadmeNotFoundError(
 }
 
 /**
- * 内部エラーを作成
+ * Create an internal error
  */
 export function createInternalError(message: string, originalError?: Error): ApiError {
   return createError(ERROR_CODES.INTERNAL_ERROR, `Internal error: ${message}`, {

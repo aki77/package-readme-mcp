@@ -2,10 +2,10 @@ import { z } from "zod";
 import type { ValidationError, ValidationResult } from "../types/index.js";
 
 /**
- * パッケージ名のZodスキーマ
- * - 英数字、ハイフン、アンダースコア、スラッシュ、ピリオド、アットマークのみ許可
- * - 最大256文字の制限
- * - 空文字列は不可
+ * Zod schema for package name
+ * - Only allows alphanumeric characters, hyphens, underscores, slashes, periods, and @ symbols
+ * - Maximum 256 characters limit
+ * - Empty string not allowed
  */
 const packageNameSchema = z
   .string()
@@ -17,11 +17,11 @@ const packageNameSchema = z
   );
 
 /**
- * セマンティックバージョニング（semver）形式のZodスキーマ
- * - 基本形式: X.Y.Z
- * - プレリリース: X.Y.Z-alpha.1
- * - ビルドメタデータ: X.Y.Z+build.1
- * - 複合: X.Y.Z-alpha.1+build.1
+ * Zod schema for semantic versioning (semver) format
+ * - Basic format: X.Y.Z
+ * - Prerelease: X.Y.Z-alpha.1
+ * - Build metadata: X.Y.Z+build.1
+ * - Combined: X.Y.Z-alpha.1+build.1
  */
 const versionSchema = z
   .string()
@@ -32,31 +32,31 @@ const versionSchema = z
   );
 
 /**
- * NPMパッケージのパラメータスキーマ
+ * NPM package parameter schema
  */
 export const npmPackageParamsSchema = z.object({
   name: packageNameSchema,
 });
 
 /**
- * Gemパッケージのパラメータスキーマ
+ * Gem package parameter schema
  */
 export const gemPackageParamsSchema = z.object({
   name: packageNameSchema,
 });
 
 /**
- * NPMパッケージのパラメータ型
+ * NPM package parameter type
  */
 export type NpmPackageParams = z.infer<typeof npmPackageParamsSchema>;
 
 /**
- * Gemパッケージのパラメータ型
+ * Gem package parameter type
  */
 export type GemPackageParams = z.infer<typeof gemPackageParamsSchema>;
 
 /**
- * Zodのエラーを ValidationError の配列に変換
+ * Convert Zod error to ValidationError array
  */
 function zodErrorToValidationErrors(error: z.ZodError): ValidationError[] {
   return error.errors.map((err) => ({
@@ -67,7 +67,7 @@ function zodErrorToValidationErrors(error: z.ZodError): ValidationError[] {
 }
 
 /**
- * NPMパッケージのパラメータを検証
+ * Validate NPM package parameters
  */
 export function validateNpmPackageParams(params: unknown): ValidationResult<NpmPackageParams> {
   try {
@@ -96,7 +96,7 @@ export function validateNpmPackageParams(params: unknown): ValidationResult<NpmP
 }
 
 /**
- * Gemパッケージのパラメータを検証
+ * Validate Gem package parameters
  */
 export function validateGemPackageParams(params: unknown): ValidationResult<GemPackageParams> {
   try {
@@ -125,7 +125,7 @@ export function validateGemPackageParams(params: unknown): ValidationResult<GemP
 }
 
 /**
- * パッケージ名の形式を検証（汎用）
+ * Validate package name format (generic)
  */
 export function isValidPackageName(name: string): boolean {
   try {
@@ -137,7 +137,7 @@ export function isValidPackageName(name: string): boolean {
 }
 
 /**
- * バージョン番号の形式を検証（汎用）
+ * Validate version number format (generic)
  */
 export function isValidVersion(version: string): boolean {
   try {

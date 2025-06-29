@@ -76,7 +76,7 @@ async function createGemPackageInfoFromGemspec(
 }
 
 /**
- * GemPackageInfoオブジェクトを作成する
+ * Create a GemPackageInfo object
  */
 function createGemPackageInfo(
   name: string,
@@ -92,7 +92,7 @@ function createGemPackageInfo(
 }
 
 /**
- * bundle show コマンドでgemのパスを取得
+ * Get gem path using bundle show command
  */
 async function getGemPath(gemName: string): Promise<string | undefined> {
   try {
@@ -104,11 +104,11 @@ async function getGemPath(gemName: string): Promise<string | undefined> {
 }
 
 /**
- * gemspecファイルからdescriptionを取得
+ * Get description from gemspec file
  */
 async function getDescriptionFromGemspec(gemPath: string): Promise<string | undefined> {
   try {
-    // ディレクトリ内の最初の.gemspecファイルを探す
+    // Find the first .gemspec file in the directory
     const { readdir } = await import("node:fs/promises");
     const files = await readdir(gemPath);
     const gemspecFile = files.find((file) => file.endsWith(".gemspec"));
@@ -120,13 +120,13 @@ async function getDescriptionFromGemspec(gemPath: string): Promise<string | unde
     const gemspecPath = join(gemPath, gemspecFile);
     const content = await readFile(gemspecPath, "utf-8");
 
-    // gemspecファイルからdescriptionを抽出
+    // Extract description from gemspec file
     const descriptionMatch = content.match(/\.description\s*=\s*["'`]([^"'`]+)["'`]/);
     if (descriptionMatch?.[1]) {
       return descriptionMatch[1].trim();
     }
 
-    // summary も試行
+    // Try summary as well
     const summaryMatch = content.match(/\.summary\s*=\s*["'`]([^"'`]+)["'`]/);
     if (summaryMatch?.[1]) {
       return summaryMatch[1].trim();

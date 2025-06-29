@@ -26,7 +26,7 @@ describe("validation", () => {
       expect(isValidPackageName("package%")).toBe(false);
       expect(isValidPackageName("package&")).toBe(false);
       expect(isValidPackageName("package*")).toBe(false);
-      expect(isValidPackageName("a".repeat(257))).toBe(false); // 257文字
+      expect(isValidPackageName("a".repeat(257))).toBe(false); // 257 characters
     });
   });
 
