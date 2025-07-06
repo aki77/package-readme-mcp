@@ -1,0 +1,6 @@
+{
+  "name": "invalid-package",
+  "version": "1.0.0",
+  "description": "Package with invalid repository",
+  "repository": "https://example.com/invalid-repo"
+}

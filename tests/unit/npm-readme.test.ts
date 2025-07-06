@@ -96,7 +96,7 @@ describe("npm-readme", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe("PACKAGE_NOT_FOUND");
+        expect(result.error.code).toBe("README_NOT_FOUND");
         expect(result.error.message).toContain("invalid-package");
       }
     });
