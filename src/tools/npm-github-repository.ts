@@ -5,6 +5,7 @@ import {
   createInternalError,
   createPackageNotFoundError,
 } from "../utils/errors.js";
+import { extractRepositoryName, getRepositoryNameFromText } from "../utils/github-url.js";
 import type { NpmPackageParams } from "../utils/validation.js";
 import { resolvePackagePath } from "./npm-readme.js";
 
@@ -18,7 +19,7 @@ async function readPackageJson(packagePath: string): Promise<any | null> {
   }
 }
 
-function extractRepositoryName(repository: string | { url: string }): string | null {
+function extractRepositoryNameFromNpmField(repository: string | { url: string }): string | null {
   let url: string;
   
   if (typeof repository === "object" && repository.url) {
@@ -29,8 +30,7 @@ function extractRepositoryName(repository: string | { url: string }): string | n
     return null;
   }
 
-  const githubMatch = url.match(/github\.com[/:]([^/]+\/[^/]+?)(?:\.git)?(?:[/#].*)?$/);
-  return githubMatch ? githubMatch[1] : null;
+  return extractRepositoryName(url);
 }
 
 export async function getNpmGitHubRepository(
@@ -59,25 +59,31 @@ export async function getNpmGitHubRepository(
       };
     }
 
-    if (!packageData.repository) {
-      return {
-        success: false,
-        error: {
-          code: "REPOSITORY_NOT_FOUND",
-          message: `Repository information not found for package: ${name}`,
-        },
-      };
-    }
+    let repositoryName: string | null = null;
 
-    const repositoryName = extractRepositoryName(packageData.repository);
-    if (!repositoryName) {
-      return {
-        success: false,
-        error: {
-          code: "REPOSITORY_INVALID",
-          message: `Invalid or non-GitHub repository for package: ${name}`,
-        },
-      };
+    if (packageData.repository) {
+      repositoryName = extractRepositoryNameFromNpmField(packageData.repository);
+      if (!repositoryName) {
+        return {
+          success: false,
+          error: {
+            code: "REPOSITORY_INVALID",
+            message: `Invalid or non-GitHub repository for package: ${name}`,
+          },
+        };
+      }
+    } else {
+      const content = JSON.stringify(packageData, null, 2);
+      repositoryName = getRepositoryNameFromText(content);
+      if (!repositoryName) {
+        return {
+          success: false,
+          error: {
+            code: "REPOSITORY_NOT_FOUND",
+            message: `Repository information not found for package: ${name}`,
+          },
+        };
+      }
     }
 
     return {

@@ -73,6 +73,27 @@ describe("getGemGitHubRepository", () => {
     }
   });
 
+  it("should return repository name from multiline metadata", async () => {
+    const { exec } = await import("node:child_process");
+    const mockExec = vi.mocked(exec);
+    const fixtureGemPath = join(process.cwd(), "tests/fixtures/gems/rails-multiline-7.0.0");
+
+    // Mock bundle show command to return fixture path
+    mockExec.mockImplementation((command, callback) => {
+      if (typeof callback === "function") {
+        (callback as any)(null, { stdout: fixtureGemPath + "\n", stderr: "" });
+      }
+      return {} as any;
+    });
+
+    const result = await getGemGitHubRepository({ name: "rails" });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toBe("rails/rails");
+    }
+  });
+
   it("should return error when gemspec has no repository information", async () => {
     const { exec } = await import("node:child_process");
     const mockExec = vi.mocked(exec);

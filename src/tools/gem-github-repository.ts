@@ -1,29 +1,13 @@
-import { exec } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { promisify } from "node:util";
 import type { PackageResult } from "../types/index.js";
 import {
   createInternalError,
   createPackageNotFoundError,
 } from "../utils/errors.js";
+import { getGemPath } from "../utils/gem.js";
+import { getRepositoryNameFromText } from "../utils/github-url.js";
 import type { GemPackageParams } from "../utils/validation.js";
-
-const execAsync = promisify(exec);
-
-async function getGemPath(gemName: string): Promise<string | undefined> {
-  try {
-    const { stdout } = await execAsync(`bundle show ${gemName}`);
-    return stdout.trim();
-  } catch {
-    return undefined;
-  }
-}
-
-function extractRepositoryName(url: string): string | null {
-  const githubMatch = url.match(/github\.com[/:]([^/]+\/[^/]+?)(?:\.git)?(?:[/#].*)?$/);
-  return githubMatch ? githubMatch[1] : null;
-}
 
 async function getRepositoryFromGemspec(gemPath: string): Promise<string | null> {
   try {
@@ -38,31 +22,7 @@ async function getRepositoryFromGemspec(gemPath: string): Promise<string | null>
     const gemspecPath = join(gemPath, gemspecFile);
     const content = await readFile(gemspecPath, "utf-8");
 
-    const homepageMatch = content.match(/\.homepage\s*=\s*["'`]([^"'`]+)["'`]/);
-    if (homepageMatch?.[1]) {
-      const repositoryName = extractRepositoryName(homepageMatch[1]);
-      if (repositoryName) {
-        return repositoryName;
-      }
-    }
-
-    const metadataMatch = content.match(/\.metadata\s*=\s*{[^}]*["'`]source_code_uri["'`]\s*=>\s*["'`]([^"'`]+)["'`]/);
-    if (metadataMatch?.[1]) {
-      const repositoryName = extractRepositoryName(metadataMatch[1]);
-      if (repositoryName) {
-        return repositoryName;
-      }
-    }
-
-    const metadataSourceMatch = content.match(/\.metadata\s*=\s*{[^}]*["'`]homepage_uri["'`]\s*=>\s*["'`]([^"'`]+)["'`]/);
-    if (metadataSourceMatch?.[1]) {
-      const repositoryName = extractRepositoryName(metadataSourceMatch[1]);
-      if (repositoryName) {
-        return repositoryName;
-      }
-    }
-
-    return null;
+    return getRepositoryNameFromText(content);
   } catch {
     return null;
   }

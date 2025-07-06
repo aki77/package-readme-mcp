@@ -1,13 +1,12 @@
-import { exec } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { promisify } from "node:util";
 import type { GemPackageInfo, PackageResult } from "../types/index.js";
 import {
   createInternalError,
   createPackageNotFoundError,
   createReadmeNotFoundError,
 } from "../utils/errors.js";
+import { getGemPath } from "../utils/gem.js";
 import { readReadmeFromPath } from "../utils/readme.js";
 import type { GemPackageParams } from "../utils/validation.js";
 
@@ -49,7 +48,6 @@ export async function getGemPackageReadme(
   }
 }
 
-const execAsync = promisify(exec);
 
 /**
  * Create a GemPackageInfo by getting description from gemspec if README is not found
@@ -94,14 +92,6 @@ function createGemPackageInfo(
 /**
  * Get gem path using bundle show command
  */
-async function getGemPath(gemName: string): Promise<string | undefined> {
-  try {
-    const { stdout } = await execAsync(`bundle show ${gemName}`);
-    return stdout.trim();
-  } catch {
-    return undefined;
-  }
-}
 
 /**
  * Get description from gemspec file
