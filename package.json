@@ -1,6 +1,6 @@
 {
   "name": "@aki77/package-readme-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server for fetching README files and GitHub repository information from npm packages and Ruby gems",
   "type": "module",
   "main": "dist/index.js",
